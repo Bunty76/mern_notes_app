@@ -14,7 +14,7 @@ function App() {
         <Route path="/note/:id" element={<DetailNote />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
-      <Route path="*" element={ <div>page not found for this url</div> } />
+        <Route path="*" element={<div>page not found for this url</div>} />
       </Routes>
     </>
   );
