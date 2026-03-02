@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import express from "express";
 import { connectDB } from "./config/db.js";
 import noteRoutes from "./routes/noteRoutes.js";
+import cors from "cors";
 
 dotenv.config();
 
@@ -12,6 +13,7 @@ const app = express();
 const PORT = process.env.PORT;
 
 //middelware
+app.use(cors());
 app.use(express.json()); // this middleware will parse JSON bodies: req.body
 app.use("/api/notes", noteRoutes);
 
