@@ -84,7 +84,7 @@ const NoteDetailPage = () => {
           </div>
 
           <div className="card bg-base-100">
-            <div className="card-body">
+            <div className="card-body backdrop-brightness-50">
               <div className="form-control mb-4">
                 <label className="label">
                   <span className="label-text">Title</span>
