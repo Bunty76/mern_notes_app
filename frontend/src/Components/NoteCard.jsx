@@ -1,8 +1,28 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { formatDate } from "../lib/utils";
+import { PenIcon, Trash2Icon } from "lucide-react";
+import axiosInstance from "../lib/axios";
+import toast from "react-hot-toast";
 
-const NoteCard = ({ note }) => {
+const NoteCard = ({ note, setNotes }) => {
+  const hendleDelte = async (e, id) => {
+    //stop refresh
+    e.preventDefault(); // get rid of the navigation behaviour
+    if (!window.confirm("Are you sure you want to delete this note?")) return;
+
+    //delete api call
+    try {
+      await axiosInstance.delete(`/notes/${id}`);
+
+      //change ui
+      setNotes((prev) => prev.filter((prevnote) => prevnote._id !== id)); // get rid of delete note
+      toast.success("note deleted successfully!");
+    } catch (error) {
+      toast.error("error in delete note, try later please!");
+      console.log("error in hendleDelete", error);
+    }
+  };
   return (
     <Link
       to={`/note/${note._id}`}
@@ -16,6 +36,15 @@ const NoteCard = ({ note }) => {
           <span className="text-sm text-base-content/60">
             {formatDate(new Date(note.createdAt))}
           </span>
+          <div className="flex items-center gap-1">
+            <PenIcon className="size-5"></PenIcon>
+            <button
+              className="btn btn-ghost btn-xs text-error"
+              onClick={(e) => hendleDelte(e, note._id)}
+            >
+              <Trash2Icon className="size-5" />
+            </button>
+          </div>
         </div>
       </div>
     </Link>
