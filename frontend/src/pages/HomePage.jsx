@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../Components/navbar";
-import axios from "axios";
+import axiosInstance from "../lib/axios";
 import NoteCard from "../Components/NoteCard";
+
 
 const HomePage = () => {
   const [notes, setNotes] = useState([]);
@@ -9,7 +10,7 @@ const HomePage = () => {
   useEffect(() => {
     const feachData = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/notes");
+        const res = await axiosInstance.get("/notes");
         console.log(res.data);
         setNotes(res.data);
       } catch (error) {

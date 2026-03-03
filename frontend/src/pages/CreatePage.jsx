@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeftIcon } from "lucide-react";
-import axios from "axios";
+import axiosInstance from "../lib/axios";
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
@@ -20,7 +20,7 @@ const CreatePage = () => {
 
     setIsLoading(true);
     try {
-      await axios.post("http://localhost:5000/api/notes", { title, content });
+      await axiosInstance.post("/notes", { title, content });
       toast.success("note is created successfully!");
       navigate("/");
     } catch (error) {
