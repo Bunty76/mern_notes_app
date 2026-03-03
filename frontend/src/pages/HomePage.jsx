@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Navbar from "../Components/navbar";
+import Navbar from "../Components/Navbar";
 import axiosInstance from "../lib/axios";
 import NoteCard from "../Components/NoteCard";
 import NotesNotFound from "../Components/NotesNotFound";
