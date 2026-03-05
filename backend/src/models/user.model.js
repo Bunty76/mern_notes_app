@@ -32,11 +32,6 @@ const userSchema = new mongoose.Schema(
       required: true, // Required field
       minlength: 6, // Minimum length of 6 characters
     },
-    user: {
-      type: mongoose.Schema.Types.ObjectId, //connect note to user
-      ref: "User",
-      required: true,
-    },
   },
   {
     timestamps: true, // Automatically add createdAt and updatedAt fields

@@ -8,6 +8,8 @@ import noteRoutes from "./routes/noteRoutes.js";
 import cors from "cors";
 import path from "path";
 
+import userRoutes from "./routes/userRoutes.js";
+
 dotenv.config();
 
 const app = express();
@@ -24,11 +26,11 @@ if (process.env.NODE_ENV !== "production") {
 }
 app.use(express.json()); // this middleware will parse JSON bodies: req.body
 app.use("/api/notes", noteRoutes);
+app.use("/api/auth", userRoutes);
 
 if (process.env.NODE_ENV === "production") {
   //serve static files in production
   app.use(express.static(path.join(__dirname, "../../frontend/dist")));
-  
 }
 
 connectDB().then(() => {
