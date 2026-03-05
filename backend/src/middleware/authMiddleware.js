@@ -16,7 +16,7 @@ export const authMiddleware = (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SCRETE_KEY);
 
     // Attach user info to request object
-    req.user = decoded;
+    req.userId = decoded.id;
 
     next();
   } catch (error) {
