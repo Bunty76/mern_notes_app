@@ -11,11 +11,15 @@ const HomePage = () => {
     const feachData = async () => {
       try {
         const res = await axiosInstance.get("/notes");
-        console.log(res.data);
-        setNotes(res.data);
+        console.log("Response data:", res.data);
+        // Ensure we always set an array, even if backend returns something unexpected
+        const notesArray = Array.isArray(res.data) ? res.data : [];
+        setNotes(notesArray);
         setIsLoading(false);
       } catch (error) {
         console.log("err in fetching", error);
+        setNotes([]); // Set empty array on error
+        setIsLoading(false);
       }
     };
     feachData();
@@ -23,7 +27,7 @@ const HomePage = () => {
 
   if (isLoading) {
     return (
-      <div className="text-center text-primary py-10">Loading notes...</div>
+      <div className="text-center text-primary py-10 min-h-screen">Loading notes...</div>
     );
   }
   if (notes.length === 0) {

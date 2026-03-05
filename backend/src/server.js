@@ -14,20 +14,20 @@ const app = express();
 const PORT = process.env.PORT;
 const __dirname = path.resolve();
 
-//middelware
-if (process.env.NOD_ENV !== "production") {
+//middleware
+if (process.env.NODE_ENV !== "production") {
   app.use(
     cors({
-      origin: "http://localhost:5173",
+      origin: true, // Allow any origin in development
     }),
-  ); //not for production or if only for devlopment
+  ); //for development only
 }
 app.use(express.json()); // this middleware will parse JSON bodies: req.body
 app.use("/api/notes", noteRoutes);
 
-if (process.env.NOD_ENV === "production") {
-  //for devlopment
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+if (process.env.NODE_ENV === "production") {
+  //serve static files in production
+  app.use(express.static(path.join(__dirname, "../../frontend/dist")));
   
 }
 
