@@ -9,7 +9,7 @@ import cors from "cors";
 import path from "path";
 
 import userRoutes from "./routes/userRoutes.js";
-
+import cookieParser from "cookie-parser";
 dotenv.config();
 
 const app = express();
@@ -24,6 +24,7 @@ if (process.env.NODE_ENV !== "production") {
     }),
   ); //for development only
 }
+app.use(cookieParser());
 app.use(express.json()); // this middleware will parse JSON bodies: req.body
 app.use("/api/notes", noteRoutes);
 app.use("/api/auth", userRoutes);

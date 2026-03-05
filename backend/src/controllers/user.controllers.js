@@ -77,3 +77,11 @@ export const handleLogin = async (req, res) => {
     console.log("err in login", error);
   }
 };
+
+//handle logout user
+export const handleLogout = (req, res) => {
+  //1 clear token from cookies
+  res.clearCookie("token");
+  //2 return success message
+  res.status(200).json({ message: "Logout successful" });
+};
