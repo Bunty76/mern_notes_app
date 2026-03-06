@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom';
-import {PlusIcon, LogOutIcon} from "lucide-react"
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { PlusIcon, LogOutIcon } from "lucide-react";
 import axiosInstance from "../lib/axios";
 
 const navbar = () => {
@@ -38,15 +38,22 @@ const navbar = () => {
                   <PlusIcon className="size-5" />
                   <span>New Note</span>
                 </Link>
-                <button onClick={handleLogout} className="btn btn-outline btn-error">
+                <button
+                  onClick={handleLogout}
+                  className="btn btn-outline btn-error"
+                >
                   <LogOutIcon className="size-5" />
                   <span>Logout</span>
                 </button>
               </>
             ) : (
               <>
-                <Link to={"/login"} className="btn btn-ghost">Login</Link>
-                <Link to={"/register"} className="btn btn-primary">Sign Up</Link>
+                <Link to={"/login"} className="btn btn-ghost">
+                  Login
+                </Link>
+                <Link to={"/register"} className="btn btn-primary">
+                  Sign Up
+                </Link>
               </>
             )}
           </div>
@@ -54,6 +61,6 @@ const navbar = () => {
       </div>
     </header>
   );
-}
+};
 
-export default navbar
+export default navbar;
