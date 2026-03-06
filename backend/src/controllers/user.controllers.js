@@ -25,7 +25,7 @@ export const handleRegister = async (req, res) => {
     const newUser = await userModel.create({ username, email, password });
     
     //6 generate JWT token
-    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SCRETE_KEY, {
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
     
@@ -78,7 +78,7 @@ export const handleLogin = async (req, res) => {
         massage: "User not exist or password is incorrect",
       });
     //7 password is correct asign token
-    const token = jwt.sign({ id: userExist._id }, process.env.JWT_SCRETE_KEY, {
+    const token = jwt.sign({ id: userExist._id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
     //8 return token through cookies in httponly

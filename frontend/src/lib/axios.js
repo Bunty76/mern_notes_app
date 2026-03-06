@@ -1,8 +1,7 @@
 import axios from "axios";
 
-//in there production no localhost so make it dynamic
-const BaseURL =
-  import.meta.env.MODE === "production" ? "http://localhost:5000/api" : "/api";
+// Use environment variable for API URL, fallback to /api for dev proxy
+const BaseURL = import.meta.env.VITE_API_URL || "/api";
 const axiosInstance = axios.create({
   baseURL: BaseURL,
 });
