@@ -22,9 +22,28 @@ export const handleRegister = async (req, res) => {
       });
     }
     //5 if user not exist then create user
-    await userModel.create({ username, email, password });
+    const newUser = await userModel.create({ username, email, password });
+    
+    //6 generate JWT token
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SCRETE_KEY, {
+      expiresIn: "1h",
+    });
+    
+    //7 return token in response (and also set cookie for consistency with login)
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: "strict",
+      maxAge: 1 * 60 * 60 * 1000, // 1 hour in milliseconds
+    });
+    
     res.status(201).json({
       message: "User registered successfully",
+      token: token,
+      user: {
+        id: newUser._id,
+        username: newUser.username,
+        email: newUser.email,
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -37,12 +56,12 @@ export const handleRegister = async (req, res) => {
 //handle login user
 export const handleLogin = async (req, res) => {
   //1 take input from body
-  const { username, email, password } = req.body;
+  const { email, password } = req.body;
   try {
     //2 check all fields are present
-    if (!username || !email || !password)
+    if (!email || !password)
       return res.status(400).json({
-        massage: "All fields are required",
+        message: "Email and password are required",
       });
     //3 check user exist or not
     const userExist = await userModel.findOne({ email });
@@ -68,8 +87,16 @@ export const handleLogin = async (req, res) => {
       sameSite: "strict",
       maxAge: 1 * 60 * 60 * 1000, // 1 hour in milliseconds
     });
-    //9 return success message
-    res.status(200).json({ message: "Login successful" });
+    //9 return success message and token in response body
+    res.status(200).json({
+      message: "Login successful",
+      token: token,
+      user: {
+        id: userExist._id,
+        username: userExist.username,
+        email: userExist.email,
+      },
+    });
   } catch (error) {
     res.status(500).json({
       massage: "Server error in login",

@@ -1,8 +1,29 @@
-import React from 'react'
-import { Link } from 'react-router-dom';
-import {PlusIcon} from "lucide-react"
+import React, { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom';
+import {PlusIcon, LogOutIcon} from "lucide-react"
+import axiosInstance from "../lib/axios";
 
 const navbar = () => {
+  const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await axiosInstance.post("/auth/logout");
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem("token");
+      setIsLoggedIn(false);
+      navigate("/login");
+    }
+  };
+
   return (
     <header className="bg-base-300 border-b border-base-content/10">
       <div className="mx-auto max-w-6xl p-4">
@@ -11,10 +32,23 @@ const navbar = () => {
             ThinkBoard
           </h1>
           <div className="flex items-center gap-4">
-            <Link to={"/create"} className="btn btn-primary">
-              <PlusIcon className="size-5" />
-              <span>New Note</span>
-            </Link>
+            {isLoggedIn ? (
+              <>
+                <Link to={"/create"} className="btn btn-primary">
+                  <PlusIcon className="size-5" />
+                  <span>New Note</span>
+                </Link>
+                <button onClick={handleLogout} className="btn btn-outline btn-error">
+                  <LogOutIcon className="size-5" />
+                  <span>Logout</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to={"/login"} className="btn btn-ghost">Login</Link>
+                <Link to={"/register"} className="btn btn-primary">Sign Up</Link>
+              </>
+            )}
           </div>
         </div>
       </div>
