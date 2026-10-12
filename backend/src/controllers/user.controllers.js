@@ -4,41 +4,87 @@ import jwt from "jsonwebtoken";
 
 //handle register user
 export const handleRegister = async (req, res) => {
-  //1 take input from body
-  const { username, email, password } = req.body;
   try {
-    //2 check all fields are present
+    const { username, email, password } = req.body || {};
+
+    // 1. Check all required fields are present
     if (!username || !email || !password) {
       return res.status(400).json({
-        message: "All fields are required",
+        message: "All fields (username, email, password) are required",
       });
     }
-    //3 check user exist or not
-    const user = await userModel.findOne({ email });
-    //4 if user not exist then return error
-    if (user) {
+
+    const trimmedUsername = typeof username === "string" ? username.trim() : "";
+    const trimmedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+
+    if (!trimmedUsername || !trimmedEmail || typeof password !== "string") {
       return res.status(400).json({
-        message: "User already exist",
+        message: "Invalid input provided. Fields cannot be empty.",
       });
     }
-    //5 if user not exist then create user
-    const newUser = await userModel.create({ username, email, password });
-    
-    //6 generate JWT token
-    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+
+    // 2. Validate field formats and lengths
+    if (trimmedUsername.length < 3 || trimmedUsername.length > 30) {
+      return res.status(400).json({
+        message: "Username must be between 3 and 30 characters long",
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      return res.status(400).json({
+        message: "Please provide a valid email address",
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters long",
+      });
+    }
+
+    // 3. Check if user with same email or username already exists
+    const existingUser = await userModel.findOne({
+      $or: [{ email: trimmedEmail }, { username: trimmedUsername }],
     });
-    
-    //7 return token in response (and also set cookie for consistency with login)
+
+    if (existingUser) {
+      if (existingUser.email.toLowerCase() === trimmedEmail) {
+        return res.status(400).json({
+          message: "Email is already registered",
+        });
+      }
+      if (existingUser.username.toLowerCase() === trimmedUsername.toLowerCase()) {
+        return res.status(400).json({
+          message: "Username is already taken",
+        });
+      }
+    }
+
+    // 4. Create user
+    const newUser = await userModel.create({
+      username: trimmedUsername,
+      email: trimmedEmail,
+      password,
+    });
+
+    // 5. Generate JWT token
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRE || "7d",
+    });
+
+    // 6. Set cookie
+    const isProduction = process.env.NODE_ENV === "production";
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "strict",
-      maxAge: 1 * 60 * 60 * 1000, // 1 hour in milliseconds
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-    
-    res.status(201).json({
+
+    return res.status(201).json({
       message: "User registered successfully",
-      token: token,
+      token,
       user: {
         id: newUser._id,
         username: newUser.username,
@@ -46,51 +92,77 @@ export const handleRegister = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Server error in register process",
+    console.error("Error in handleRegister:", error);
+
+    // Handle Mongoose validation errors
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((val) => val.message);
+      return res.status(400).json({
+        message: messages.join(", "),
+      });
+    }
+
+    // Handle MongoDB duplicate key error (code 11000)
+    if (error.code === 11000) {
+      const duplicateField = Object.keys(error.keyPattern || {})[0] || "field";
+      return res.status(400).json({
+        message: `${
+          duplicateField.charAt(0).toUpperCase() + duplicateField.slice(1)
+        } already exists`,
+      });
+    }
+
+    return res.status(500).json({
+      message: "Server error during registration process",
     });
-    console.log("er", error);
   }
 };
 
 //handle login user
 export const handleLogin = async (req, res) => {
-  //1 take input from body
-  const { email, password } = req.body;
   try {
-    //2 check all fields are present
-    if (!email || !password)
+    const { email, password } = req.body || {};
+
+    if (!email || !password) {
       return res.status(400).json({
         message: "Email and password are required",
       });
-    //3 check user exist or not
-    const userExist = await userModel.findOne({ email });
-    //4 if user not exit then return error
-    if (!userExist)
+    }
+
+    const trimmedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+
+    // Find user by normalized email
+    const userExist = await userModel.findOne({ email: trimmedEmail });
+    if (!userExist) {
       return res.status(400).json({
-        massage: "User not exist or password is incorrect",
+        message: "Invalid email or password",
       });
-    //5 if user exist then check password
-    const ismatch = await bcryptjs.compare(password, userExist.password);
-    //6 if password is incorrect then return error
-    if (!ismatch)
+    }
+
+    // Compare password
+    const isMatch = await bcryptjs.compare(password, userExist.password);
+    if (!isMatch) {
       return res.status(400).json({
-        massage: "User not exist or password is incorrect",
+        message: "Invalid email or password",
       });
-    //7 password is correct asign token
+    }
+
+    // Sign token
     const token = jwt.sign({ id: userExist._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: process.env.JWT_EXPIRE || "7d",
     });
-    //8 return token through cookies in httponly
+
+    const isProduction = process.env.NODE_ENV === "production";
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "strict",
-      maxAge: 1 * 60 * 60 * 1000, // 1 hour in milliseconds
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-    //9 return success message and token in response body
-    res.status(200).json({
+
+    return res.status(200).json({
       message: "Login successful",
-      token: token,
+      token,
       user: {
         id: userExist._id,
         username: userExist.username,
@@ -98,17 +170,20 @@ export const handleLogin = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({
-      massage: "Server error in login",
+    console.error("Error in handleLogin:", error);
+    return res.status(500).json({
+      message: "Server error during login",
     });
-    console.log("err in login", error);
   }
 };
 
 //handle logout user
 export const handleLogout = (req, res) => {
-  //1 clear token from cookies
-  res.clearCookie("token");
-  //2 return success message
-  res.status(200).json({ message: "Logout successful" });
+  const isProduction = process.env.NODE_ENV === "production";
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+  });
+  return res.status(200).json({ message: "Logout successful" });
 };

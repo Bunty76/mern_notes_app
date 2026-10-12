@@ -9,32 +9,36 @@ const userSchema = new mongoose.Schema(
   {
     // Username field with validation rules
     username: {
-      type: String, // Must be a string
-      required: true, // Required field
-      trim: true, // Removes whitespace from both ends
-      minlength: 3, // Minimum length of 3 characters
-      maxlength: 30, // Maximum length of 30 characters
-      unique: true, // Must be unique in the collection
+      type: String,
+      required: [true, "Username is required"],
+      trim: true,
+      minlength: [3, "Username must be at least 3 characters"],
+      maxlength: [30, "Username cannot exceed 30 characters"],
+      unique: true,
     },
 
     // Email field with validation rules
     email: {
-      type: String, // Must be a string
-      required: true, // Required field
-      unique: true, // Must be unique
-      lowercase: true, // Converts email to lowercase
-      trim: true, // Removes whitespace
+      type: String,
+      required: [true, "Email is required"],
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: [
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        "Please provide a valid email address",
+      ],
     },
 
     // Password field with validation rules
     password: {
-      type: String, // Must be a string
-      required: true, // Required field
-      minlength: 6, // Minimum length of 6 characters
+      type: String,
+      required: [true, "Password is required"],
+      minlength: [6, "Password must be at least 6 characters"],
     },
   },
   {
-    timestamps: true, // Automatically add createdAt and updatedAt fields
+    timestamps: true,
   },
 );
 

@@ -4,20 +4,18 @@ services:
     env: node
     buildCommand: cd backend && npm install
     startCommand: cd backend && npm start
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 5000
       - key: MONGO_URI
-        fromDatabase:
-          name: thinknote-db
-          property: connectionString
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_EXPIRE
         value: 7d
-    healthCheckPath: /api/notes
+      - key: CORS_ORIGIN
+        value: https://thinknote-frontend.onrender.com
 
   - type: web
     name: thinknote-frontend
@@ -30,9 +28,5 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://thinknote-backend.onrender.com
+        value: https://thinknote-backend.onrender.com/api
 
-databases:
-  - name: thinknote-db
-    type: mongodb
-    plan: free

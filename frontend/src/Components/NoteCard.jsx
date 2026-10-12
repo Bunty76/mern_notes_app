@@ -11,16 +11,15 @@ const NoteCard = ({ note, setNotes }) => {
     e.preventDefault(); // get rid of the navigation behaviour
     if (!window.confirm("Are you sure you want to delete this note?")) return;
 
-    //delete api call
     try {
       await axiosInstance.delete(`/notes/${id}`);
 
       //change ui
-      setNotes((prev) => prev.filter((prevnote) => prevnote._id !== id)); // get rid of delete note
-      toast.success("note deleted successfully!");
+      setNotes((prev) => prev.filter((prevnote) => prevnote._id !== id));
+      toast.success("Note deleted successfully!");
     } catch (error) {
-      toast.error("error in delete note, try later please!");
-      console.log("error in hendleDelete", error);
+      toast.error(error.response?.data?.message || "Failed to delete note. Please try again.");
+      console.log("error in handleDelete", error);
     }
   };
   return (

@@ -6,13 +6,13 @@ export async function getAllNotes(req, res) {
     res.status(200).json(notes);
   } catch (error) {
     console.error("Error in getAllNotes controller", error);
-    res.status(500).json({ message: "Internal server error bunty" });
+    res.status(500).json({ message: "Internal server error" });
   }
 }
 
 export async function getNoteById(req, res) {
   try {
-    const note = await Note.findById({ _id: req.params.id, user: req.userId });
+    const note = await Note.findOne({ _id: req.params.id, user: req.userId });
     if (!note) return res.status(404).json({ message: "Note not found!" });
     res.json(note);
   } catch (error) {
@@ -23,8 +23,16 @@ export async function getNoteById(req, res) {
 
 export async function createNote(req, res) {
   try {
-    const { title, content } = req.body;
-    const note = new Note({ title, content, user: req.userId });
+    const { title, content } = req.body || {};
+    if (!title || !title.trim() || !content || !content.trim()) {
+      return res.status(400).json({ message: "Title and content are required" });
+    }
+
+    const note = new Note({
+      title: title.trim(),
+      content: content.trim(),
+      user: req.userId,
+    });
 
     const savedNote = await note.save();
     res.status(201).json(savedNote);
@@ -36,11 +44,15 @@ export async function createNote(req, res) {
 
 export async function updateNote(req, res) {
   try {
-    const { title, content } = req.body;
-    const updatedNote = await Note.findByIdAndUpdate(
+    const { title, content } = req.body || {};
+    if (!title || !title.trim() || !content || !content.trim()) {
+      return res.status(400).json({ message: "Title and content are required" });
+    }
+
+    const updatedNote = await Note.findOneAndUpdate(
       { _id: req.params.id, user: req.userId },
-      { title, content },
-      { new: true },
+      { title: title.trim(), content: content.trim() },
+      { new: true, runValidators: true },
     );
 
     if (!updatedNote)

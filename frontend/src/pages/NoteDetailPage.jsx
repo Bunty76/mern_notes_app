@@ -9,6 +9,7 @@ const NoteDetailPage = () => {
   const [note, setNote] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const { id } = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetching = async () => {
@@ -16,8 +17,8 @@ const NoteDetailPage = () => {
         const res = await axiosInstance.get(`/notes/${id}`);
         setNote(res.data);
       } catch (error) {
-        console.log("ubble to fetch that note");
-        toast.error("ubble to fetch that note");
+        console.error("Error fetching note:", error);
+        toast.error("Unable to load note");
       } finally {
         setIsLoading(false);
       }
@@ -31,31 +32,34 @@ const NoteDetailPage = () => {
     if (!window.confirm("Are you sure you want to delete this note?")) return;
     try {
       await axiosInstance.delete(`/notes/${id}`);
+      toast.success("Note deleted successfully!");
       navigate("/");
     } catch (error) {
-      toast.error("error in hadledelte");
+      toast.error(error.response?.data?.message || "Failed to delete note");
     }
   };
 
   //save updated note
   const handleSave = async () => {
     //check empty or not
-    if (!note.title.trim() || !note.content.trim()) {
-      toast.error("No update! or all required");
+    if (!note?.title?.trim() || !note?.content?.trim()) {
+      toast.error("Title and content are required");
       return;
     }
     setIsSaving(true);
     try {
-      await axiosInstance.put(`/notes/${id}`, note);
-      toast.success("successfully update and save");
+      await axiosInstance.put(`/notes/${id}`, {
+        title: note.title.trim(),
+        content: note.content.trim(),
+      });
+      toast.success("Note updated successfully!");
       navigate("/");
     } catch (error) {
-      toast.error("saving update in error");
+      toast.error(error.response?.data?.message || "Failed to update note");
     } finally {
       setIsSaving(false);
     }
   };
-  const navigate = useNavigate();
 
   if (isLoading) {
     return (

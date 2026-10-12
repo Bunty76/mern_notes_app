@@ -15,16 +15,22 @@ const CreatePage = () => {
     //stop to reload page when submit
     e.preventDefault();
 
-    //check input before sumbit
-    if (!title.trim() || !content.trim()) toast.error("all field is requred");
+    //check input before submit
+    if (!title.trim() || !content.trim()) {
+      toast.error("Title and content are required");
+      return;
+    }
 
     setIsLoading(true);
     try {
-      await axiosInstance.post("/notes", { title, content });
-      toast.success("note is created successfully!");
+      await axiosInstance.post("/notes", {
+        title: title.trim(),
+        content: content.trim(),
+      });
+      toast.success("Note created successfully!");
       navigate("/");
     } catch (error) {
-      toast.error("note create in error! try later");
+      toast.error(error.response?.data?.message || "Failed to create note. Please try again.");
     } finally {
       setIsLoading(false);
     }

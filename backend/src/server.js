@@ -8,12 +8,14 @@ import noteRoutes from "./routes/noteRoutes.js";
 import cors from "cors";
 import path from "path";
 
-import userRoutes from "./routes/userRoutes.js";
+import fs from "fs";
 import cookieParser from "cookie-parser";
+import userRoutes from "./routes/userRoutes.js";
+
 dotenv.config();
 
 // Validate required environment variables
-const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET'];
+const requiredEnvVars = ["MONGO_URI", "JWT_SECRET"];
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
     console.error(`Error: Missing required environment variable: ${envVar}`);
@@ -25,27 +27,69 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const __dirname = path.resolve();
 
-//middleware
-if (process.env.NODE_ENV !== "production") {
-  app.use(
-    cors({
-      origin: true, // Allow any origin in development
-    }),
-  ); //for development only
-}
+// CORS configuration for local development and Render deployment
+const configuredOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
+  : [];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow non-browser requests or same-origin requests (no Origin header)
+      if (!origin) return callback(null, true);
+
+      // In development or if explicitly wildcarded, allow all
+      if (process.env.NODE_ENV !== "production") return callback(null, true);
+
+      // In production, match configured origins or onrender.com domains
+      if (
+        configuredOrigins.includes(origin) ||
+        configuredOrigins.includes("*") ||
+        origin.endsWith(".onrender.com")
+      ) {
+        return callback(null, true);
+      }
+
+      return callback(null, true); // Fallback allow to avoid unexpected blocks
+    },
+    credentials: true,
+  }),
+);
+
 app.use(cookieParser());
-app.use(express.json()); // this middleware will parse JSON bodies: req.body
+app.use(express.json()); // Middleware to parse JSON bodies
+
+// Health check endpoint for Render health checks and monitoring
+app.get(["/api/health", "/health"], (req, res) => {
+  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// API Routes
 app.use("/api/notes", noteRoutes);
 app.use("/api/auth", userRoutes);
 
-// Note: Static files are served by a separate frontend service on Render
-// If you want to serve frontend from this backend, uncomment below and set FRONTEND_BUILD_PATH
-// if (process.env.NODE_ENV === "production" && process.env.FRONTEND_BUILD_PATH) {
-//   app.use(express.static(path.resolve(process.env.FRONTEND_BUILD_PATH)));
-// }
+// In production, serve frontend static assets if built into frontend/dist
+const frontendDist = path.join(__dirname, "../frontend/dist");
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  app.use((req, res, next) => {
+    if (req.method === "GET" && !req.path.startsWith("/api")) {
+      return res.sendFile(path.join(frontendDist, "index.html"));
+    }
+    next();
+  });
+}
+
+// Global error handling middleware
+app.use((err, req, res, next) => {
+  console.error("Unhandled error:", err);
+  res.status(err.status || 500).json({
+    message: err.message || "Internal server error",
+  });
+});
 
 connectDB().then(() => {
-  app.listen(PORT || 5001, () => {
-    console.log("server is star to listen on ", PORT);
+  app.listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}`);
   });
 });

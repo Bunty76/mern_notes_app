@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 function Login() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
+  const [isLoading, setIsLoading] = useState(false);
 
   // Handle input change
   const handleChange = (e) => {
@@ -15,19 +16,35 @@ function Login() {
   // Handle form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const email = form.email.trim();
+    const password = form.password;
+
+    if (!email || !password) {
+      toast.error("Please enter email and password");
+      return;
+    }
+
+    setIsLoading(true);
     try {
       // Send login request to backend
-      const res = await axiosInstance.post("/auth/login", form);
+      const res = await axiosInstance.post("/auth/login", { email, password });
 
       // Save JWT token in localStorage
-      localStorage.setItem("token", res.data.token);
+      if (res.data?.token) {
+        localStorage.setItem("token", res.data.token);
+      }
 
+      toast.success("Login successful!");
       // Redirect to home page
       navigate("/");
-      toast.success("you login suce");
     } catch (error) {
-      console.error(error);
-      toast.error("Invalid email or password");
+      console.error("Login error:", error);
+      const serverMessage =
+        error.response?.data?.message || "Invalid email or password";
+      toast.error(serverMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -42,7 +59,9 @@ function Login() {
             name="email"
             placeholder="Email"
             className="input input-bordered mb-3 w-full"
+            value={form.email}
             onChange={handleChange}
+            disabled={isLoading}
             required
           />
 
@@ -51,12 +70,18 @@ function Login() {
             name="password"
             placeholder="Password"
             className="input input-bordered mb-3 w-full"
+            value={form.password}
             onChange={handleChange}
+            disabled={isLoading}
             required
           />
 
-          <button type="submit" className="btn btn-primary w-full">
-            Login
+          <button
+            type="submit"
+            className="btn btn-primary w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? "Logging in..." : "Login"}
           </button>
         </form>
         <div className="text-center mt-4">
